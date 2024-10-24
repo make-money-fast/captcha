@@ -23,7 +23,10 @@ type Store interface {
 
 	// Get returns stored digits for the captcha id. Clear indicates
 	// whether the captcha must be deleted from the store.
-	Get(id string, clear bool) (digits []byte)
+	Get(id string) (digits []byte)
+
+	// Del delete the id
+	Del(id string)
 }
 
 // expValue stores timestamp and id of captchas. It is used in the list inside
@@ -72,27 +75,26 @@ func (s *memoryStore) Set(id string, digits []byte) {
 	go s.collect()
 }
 
-func (s *memoryStore) Get(id string, clear bool) (digits []byte) {
-	if !clear {
-		// When we don't need to clear captcha, acquire read lock.
-		s.RLock()
-		defer s.RUnlock()
-	} else {
-		s.Lock()
-		defer s.Unlock()
-	}
+func (s *memoryStore) Get(id string) (digits []byte) {
+	s.RLock()
+	defer s.RUnlock()
+
 	digits, ok := s.digitsById[id]
 	if !ok {
 		return
 	}
-	if clear {
-		delete(s.digitsById, id)
-		// XXX(dchest) Index (s.idByTime) will be cleaned when
-		// collecting expired captchas.  Can't clean it here, because
-		// we don't store reference to expValue in the map.
-		// Maybe store it?
-	}
 	return
+}
+
+func (s *memoryStore) Del(id string) {
+	s.Lock()
+	defer s.Unlock()
+
+	delete(s.digitsById, id)
+	// XXX(dchest) Index (s.idByTime) will be cleaned when
+	// collecting expired captchas.  Can't clean it here, because
+	// we don't store reference to expValue in the map.
+	// Maybe store it?
 }
 
 func (s *memoryStore) collect() {

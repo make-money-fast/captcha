@@ -3,7 +3,7 @@ Package captcha
 
 **:warning: Warning: this captcha can be broken by advanced OCR captcha breaking algorithms.**
 
-	import "github.com/dchest/captcha"
+	import "github.com/make-money-fast/captcha"
 
 Package captcha implements generation and verification of image and audio
 CAPTCHAs.

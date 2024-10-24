@@ -1,3 +1,3 @@
-module github.com/dchest/captcha
+module github.com/make-money-fast/captcha
 
 go 1.18

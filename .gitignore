@@ -6,3 +6,7 @@ capgen/*.wav
 capgen/capgen
 cangensounds/cangensounds
 capexample/capexample
+
+.idea/
+
+.DS_Store

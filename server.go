@@ -50,7 +50,7 @@ func (h *captchaHandler) serve(w http.ResponseWriter, r *http.Request, id, ext, 
 
 	var content bytes.Buffer
 	switch ext {
-	case ".png":
+	case "", ".png":
 		w.Header().Set("Content-Type", "image/png")
 		WriteImage(&content, id, h.imgWidth, h.imgHeight)
 	case ".wav":
