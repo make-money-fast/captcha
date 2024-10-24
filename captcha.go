@@ -80,6 +80,10 @@ func New() string {
 	return NewLen(DefaultLen)
 }
 
+func NewWithID(id string) {
+	globalStore.Set(id, RandomDigits(DefaultLen))
+}
+
 // NewLen is just like New, but accepts length of a captcha solution as the
 // argument.
 func NewLen(length int) (id string) {
