@@ -52,10 +52,10 @@ func (h *captchaHandler) serve(w http.ResponseWriter, r *http.Request, id, ext, 
 	switch ext {
 	case "", ".png":
 		w.Header().Set("Content-Type", "image/png")
-		WriteImage(&content, id, h.imgWidth, h.imgHeight)
+		WriteImage(r.Context(), &content, id, h.imgWidth, h.imgHeight)
 	case ".wav":
 		w.Header().Set("Content-Type", "audio/x-wav")
-		WriteAudio(&content, id, lang)
+		WriteAudio(r.Context(), &content, id, lang)
 	default:
 		return ErrNotFound
 	}
@@ -76,7 +76,7 @@ func (h *captchaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.FormValue("reload") != "" {
-		Reload(id)
+		Reload(r.Context(), id)
 	}
 	lang := strings.ToLower(r.FormValue("lang"))
 	download := path.Base(dir) == "download"

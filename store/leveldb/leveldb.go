@@ -1,6 +1,7 @@
 package leveldb
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
@@ -14,6 +15,24 @@ const (
 type LeveldbStore struct {
 	db         *leveldb.DB
 	expireTime time.Duration
+}
+
+func NewLeveldbStore(path string, expireTime time.Duration) *LeveldbStore {
+	db, err := leveldb.OpenFile(path, nil)
+	if err != nil {
+		panic("open leveldb path failed: " + err.Error())
+	}
+	return &LeveldbStore{
+		db:         db,
+		expireTime: expireTime,
+	}
+}
+
+func NewWithLeveldb(db *leveldb.DB, expireTime time.Duration) *LeveldbStore {
+	return &LeveldbStore{
+		db:         db,
+		expireTime: expireTime,
+	}
 }
 
 type entity struct {
@@ -46,44 +65,26 @@ func (e *entity) Marshal() []byte {
 	return data
 }
 
-func (LeveldbStore) getKey(key string) []byte {
+func (l *LeveldbStore) getKey(key string) []byte {
 	return []byte(keyPrefix + key)
 }
 
-func (l *LeveldbStore) Set(id string, digits []byte) {
+func (l *LeveldbStore) Set(ctx context.Context, id string, digits []byte) {
 	_ = l.db.Put(l.getKey(id), newEntity(digits).Marshal(), nil)
 }
 
-func (l *LeveldbStore) Get(id string) (digits []byte) {
+func (l *LeveldbStore) Get(ctx context.Context, id string) (digits []byte) {
 	val, _ := l.db.Get(l.getKey(id), nil)
 	e := entityFromBytes(val)
 	if e.expire(l.expireTime) {
-		l.Del(id)
+		l.Del(ctx, id)
 		return nil
 	}
 	return e.Digits
 }
 
-func (l *LeveldbStore) Del(id string) {
+func (l *LeveldbStore) Del(ctx context.Context, id string) {
 	_ = l.db.Delete(l.getKey(id), nil)
-}
-
-func NewLeveldbStore(path string, expireTime time.Duration) *LeveldbStore {
-	db, err := leveldb.OpenFile(path, nil)
-	if err != nil {
-		panic("open leveldb path failed: " + err.Error())
-	}
-	return &LeveldbStore{
-		db:         db,
-		expireTime: expireTime,
-	}
-}
-
-func NewWithLeveldb(db *leveldb.DB, expireTime time.Duration) *LeveldbStore {
-	return &LeveldbStore{
-		db:         db,
-		expireTime: expireTime,
-	}
 }
 
 func (l *LeveldbStore) GCOnce() {

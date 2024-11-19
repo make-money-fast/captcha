@@ -6,6 +6,7 @@ package captcha
 
 import (
 	"container/list"
+	"context"
 	"sync"
 	"time"
 )
@@ -19,14 +20,13 @@ import (
 // method after the certain amount of captchas has been stored.)
 type Store interface {
 	// Set sets the digits for the captcha id.
-	Set(id string, digits []byte)
-
-	// Get returns stored digits for the captcha id. Clear indicates
-	// whether the captcha must be deleted from the store.
-	Get(id string) (digits []byte)
+	Set(ctx context.Context, id string, digits []byte)
 
 	// Del delete the id
-	Del(id string)
+	Del(ctx context.Context, id string)
+
+	// Verify 验证
+	Get(ctx context.Context, id string) []byte
 }
 
 // expValue stores timestamp and id of captchas. It is used in the list inside
@@ -62,7 +62,7 @@ func NewMemoryStore(collectNum int, expiration time.Duration) Store {
 	return s
 }
 
-func (s *memoryStore) Set(id string, digits []byte) {
+func (s *memoryStore) Set(ctx context.Context, id string, digits []byte) {
 	s.Lock()
 	s.digitsById[id] = digits
 	s.idByTime.PushBack(idByTimeValue{time.Now(), id})
@@ -75,7 +75,7 @@ func (s *memoryStore) Set(id string, digits []byte) {
 	go s.collect()
 }
 
-func (s *memoryStore) Get(id string) (digits []byte) {
+func (s *memoryStore) Get(ctx context.Context, id string) (digits []byte) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -86,7 +86,7 @@ func (s *memoryStore) Get(id string) (digits []byte) {
 	return
 }
 
-func (s *memoryStore) Del(id string) {
+func (s *memoryStore) Del(ctx context.Context, id string) {
 	s.Lock()
 	defer s.Unlock()
 
